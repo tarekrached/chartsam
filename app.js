@@ -30,9 +30,12 @@
     errorTileUrl: '', // blank on missing tile (ocean outside chart)
   }).addTo(map);
 
-  // Attribution (small, unobtrusive)
+  // Attribution — show active SW cache version so it's easy to verify updates
+  const cacheKeys = await caches.keys();
+  const shellKey = cacheKeys.find(k => k.startsWith('shell-'));
+  const cacheVersion = shellKey ? shellKey.replace('shell-', '') : 'uncached';
   L.control.attribution({ prefix: false, position: 'bottomleft' })
-    .addAttribution('NOAA Chart 18649')
+    .addAttribution(`NOAA Chart 18649 · ${cacheVersion}`)
     .addTo(map);
 
   // ── GPS / Location ───────────────────────────────────────────────────────

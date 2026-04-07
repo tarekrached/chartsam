@@ -131,7 +131,7 @@ The y values don't match → tiles serve content from the wrong location
 **Fix: always use `--xyz`:**
 ```bash
 gdal2tiles.py --xyz --tilesize=512 -z 5-13 -r bilinear \
-  --tiledriver=JPEG --processes=4 chart_mercator_crop.tif public/tiles/
+  --tiledriver=PNG --processes=4 chart_mercator_crop.tif public/tiles/
 ```
 
 ### Crop to neatline before tiling
@@ -187,7 +187,7 @@ gdal_translate -srcwin 173 202 17455 13428 \
 # 3. Generate tiles (--xyz is REQUIRED for Leaflet)
 rm -rf public/tiles
 gdal2tiles.py --xyz --tilesize=512 -z 5-13 -r bilinear \
-  --tiledriver=JPEG --processes=4 chart_mercator_crop.tif public/tiles/
+  --tiledriver=PNG --processes=4 chart_mercator_crop.tif public/tiles/
 
 # 4. Write tile manifest + bounds for PWA/service worker
 python3 scripts/write_manifest.py

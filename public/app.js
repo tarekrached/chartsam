@@ -14,7 +14,7 @@
   // Raster chart tile layer
   L.tileLayer(`tiles/{z}/{x}/{y}.${bounds.tileExtension}`, {
     minZoom: bounds.minZoom + 1,
-    maxZoom: bounds.maxZoom + 1,
+    maxZoom: 20,
     maxNativeZoom: bounds.maxZoom + 1,
     tileSize: 512,
     zoomOffset: -1,

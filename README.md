@@ -4,7 +4,7 @@ A lark. NOAA Chart 18649 (Entrance to San Francisco Bay) as a Progressive Web Ap
 
 ## What it does
 
-- Displays a georeferenced raster scan of the NOAA paper chart for SF Bay
+- Displays a georeferenced raster scan of [NOAA Chart 18649](18649%20SF%20Bay%20Nautical%20Chart.pdf)
 - GPS button centers the map on your position with an accuracy circle
 - Works fully offline after one online visit (service worker pre-caches all tiles)
 - Installable to home screen via Safari → Share → Add to Home Screen

@@ -6,17 +6,18 @@
 
   const map = L.map('map', {
     center: [(bounds.north + bounds.south) / 2, (bounds.west + bounds.east) / 2],
-    zoom: 10,
+    zoom: 11,
     zoomControl: false,
     attributionControl: false,
   });
 
   // Raster chart tile layer
   L.tileLayer(`tiles/{z}/{x}/{y}.${bounds.tileExtension}`, {
-    minZoom: bounds.minZoom,
-    maxZoom: bounds.maxZoom,
-    maxNativeZoom: bounds.maxZoom,
+    minZoom: bounds.minZoom + 1,
+    maxZoom: bounds.maxZoom + 1,
+    maxNativeZoom: bounds.maxZoom + 1,
     tileSize: 512,
+    zoomOffset: -1,
     // Clamp panning to chart bounds (with some padding)
     bounds: L.latLngBounds(
       [bounds.south - 0.1, bounds.west - 0.1],
@@ -79,7 +80,7 @@
 
     // Auto-center on first fix
     if (firstFix) {
-      map.setView(latlng, Math.max(map.getZoom(), 12));
+      map.setView(latlng, Math.max(map.getZoom(), 13));
       firstFix = false;
     }
 

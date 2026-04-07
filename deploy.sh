@@ -15,7 +15,7 @@ PUBLIC_DIR="$REPO_ROOT/public"
 WORKTREE_DIR="$REPO_ROOT/.gh-pages-worktree"
 
 echo "▶ Checking tiles exist..."
-tile_count=$(find "$PUBLIC_DIR/tiles" -name "*.jpg" 2>/dev/null | wc -l | tr -d ' ')
+tile_count=$(find "$PUBLIC_DIR/tiles" \( -name "*.jpg" -o -name "*.png" \) 2>/dev/null | wc -l | tr -d ' ')
 if [ "$tile_count" -eq 0 ]; then
   echo "ERROR: No tiles found in public/tiles/. Regenerate them first."
   exit 1

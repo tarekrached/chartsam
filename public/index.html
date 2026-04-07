@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="SF Bay Chart">
+  <meta name="theme-color" content="#1a3a5c">
+  <title>SF Bay Nautical Chart</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #map { width: 100%; height: 100%; background: #b8d4e8; }
+    #map { position: fixed; top: 0; left: 0; }
+
+    /* GPS accuracy circle styling */
+    .gps-accuracy { stroke: #4a90d9; stroke-width: 1; fill: #4a90d9; fill-opacity: 0.08; }
+
+    /* Status bar */
+    #status {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.65); color: #fff; font-family: -apple-system, sans-serif;
+      font-size: 12px; padding: 6px 14px; border-radius: 20px;
+      pointer-events: none; z-index: 1000; white-space: nowrap;
+      transition: opacity 0.5s;
+    }
+    #status.hidden { opacity: 0; }
+
+    /* Locate button */
+    #locate-btn {
+      position: fixed; bottom: 60px; right: 16px;
+      width: 44px; height: 44px; border-radius: 22px;
+      background: #fff; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; cursor: pointer; z-index: 1000; -webkit-tap-highlight-color: transparent;
+    }
+    #locate-btn.active { background: #4a90d9; color: #fff; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="status">Loading chart…</div>
+  <button id="locate-btn" title="Center on GPS position">📍</button>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

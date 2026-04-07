@@ -1,0 +1,9 @@
+{
+  "west": -122.7059,
+  "south": 37.6871,
+  "east": -122.2023,
+  "north": 37.9932,
+  "minZoom": 5,
+  "maxZoom": 13,
+  "tileExtension": "jpg"
+}

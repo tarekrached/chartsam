@@ -1,0 +1,15 @@
+# Generated files — regenerate with scripts/
+public/tiles/
+
+# Large source files — store separately (not in git)
+*.tif
+*.pdf
+CA_ENCs.zip
+ENC_ROOT/
+
+# Mac
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc

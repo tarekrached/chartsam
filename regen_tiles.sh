@@ -18,8 +18,8 @@ fi
 echo "▶ Removing old tiles..."
 rm -rf public/tiles
 
-echo "▶ Generating PNG tiles (z=5–13, 512px)..."
-gdal2tiles.py --xyz --tilesize=512 -z 5-13 -r bilinear \
+echo "▶ Generating PNG tiles (z=5–14, 768px)..."
+gdal2tiles.py --xyz --tilesize=768 -z 5-14 -r bilinear \
   --tiledriver=PNG --processes=4 \
   chart_mercator_crop.tif public/tiles/
 

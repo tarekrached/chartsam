@@ -7,7 +7,7 @@
  *   - bounds.json / tile-manifest.json → network-first (allow updates)
  */
 
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const SHELL_CACHE   = `shell-${CACHE_VERSION}`;
 const TILE_CACHE    = `tiles-${CACHE_VERSION}`;
 

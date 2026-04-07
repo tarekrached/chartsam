@@ -125,7 +125,9 @@
   const offlineBtn = document.getElementById('offline-btn');
 
   async function checkOfflineReady() {
-    const tileCache = await caches.open(`tiles-${(await caches.keys()).find(k => k.startsWith('tiles-')) || 'tiles-v2'}`);
+    const tileKey = (await caches.keys()).find(k => k.startsWith('tiles-'));
+    if (!tileKey) return;
+    const tileCache = await caches.open(tileKey);
     const keys = await tileCache.keys();
     if (keys.length > 0) offlineBtn.classList.add('done');
   }
@@ -139,7 +141,8 @@
     offlineBtn.disabled = true;
     try {
       const manifest = await fetch('tile-manifest.json').then(r => r.json());
-      const tileCache = await caches.open('tiles-v2');
+      const tileKey = (await caches.keys()).find(k => k.startsWith('tiles-')) || 'tiles-v6';
+      const tileCache = await caches.open(tileKey);
       const CHUNK = 20;
       let done = 0;
       for (let i = 0; i < manifest.length; i += CHUNK) {

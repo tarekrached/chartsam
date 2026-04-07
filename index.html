@@ -37,12 +37,25 @@
       font-size: 22px; cursor: pointer; z-index: 1000; -webkit-tap-highlight-color: transparent;
     }
     #locate-btn.active { background: #4a90d9; color: #fff; }
+
+    /* Offline download button */
+    #offline-btn {
+      position: fixed; bottom: 116px; right: 16px;
+      width: 44px; height: 44px; border-radius: 22px;
+      background: #fff; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; cursor: pointer; z-index: 1000; -webkit-tap-highlight-color: transparent;
+    }
+    #offline-btn.done { background: #4caf50; }
+    #offline-btn.done::after { content: '✓'; font-size: 18px; color: #fff; }
+    #offline-btn.done span { display: none; }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="status">Loading chart…</div>
   <button id="locate-btn" title="Center on GPS position">📍</button>
+  <button id="offline-btn" title="Download chart for offline use"><span>⬇️</span></button>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>

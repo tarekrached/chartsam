@@ -6,18 +6,19 @@
 
   const map = L.map('map', {
     center: [(bounds.north + bounds.south) / 2, (bounds.west + bounds.east) / 2],
-    zoom: 11,
+    zoom: 10,
     zoomControl: false,
     attributionControl: false,
   });
 
   // Raster chart tile layer
   L.tileLayer(`tiles/{z}/{x}/{y}.${bounds.tileExtension}`, {
-    minZoom: bounds.minZoom + 1,
+    minZoom: bounds.minZoom,
     maxZoom: 20,
-    maxNativeZoom: bounds.maxZoom + 1,
-    tileSize: 512,
-    zoomOffset: -1,
+    maxNativeZoom: bounds.maxZoom,
+    // Tiles are 512px images declared as tileSize:256 so the browser
+    // renders them at 2× CSS density → pixel-perfect on Retina screens.
+    tileSize: 256,
     // Clamp panning to chart bounds (with some padding)
     bounds: L.latLngBounds(
       [bounds.south - 0.1, bounds.west - 0.1],
@@ -80,7 +81,7 @@
 
     // Auto-center on first fix
     if (firstFix) {
-      map.setView(latlng, Math.max(map.getZoom(), 13));
+      map.setView(latlng, Math.max(map.getZoom(), 12));
       firstFix = false;
     }
 
@@ -116,6 +117,44 @@
 
   // ── Zoom controls (custom position for iPhone) ───────────────────────────
   L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // ── Offline download button ───────────────────────────────────────────────
+  const offlineBtn = document.getElementById('offline-btn');
+
+  async function checkOfflineReady() {
+    const tileCache = await caches.open(`tiles-${(await caches.keys()).find(k => k.startsWith('tiles-')) || 'tiles-v2'}`);
+    const keys = await tileCache.keys();
+    if (keys.length > 0) offlineBtn.classList.add('done');
+  }
+
+  offlineBtn.addEventListener('click', async () => {
+    if (offlineBtn.classList.contains('done')) {
+      showStatus('Chart already cached for offline use', true);
+      return;
+    }
+    showStatus('Downloading chart…');
+    offlineBtn.disabled = true;
+    try {
+      const manifest = await fetch('tile-manifest.json').then(r => r.json());
+      const tileCache = await caches.open('tiles-v2');
+      const CHUNK = 20;
+      let done = 0;
+      for (let i = 0; i < manifest.length; i += CHUNK) {
+        const chunk = manifest.slice(i, i + CHUNK);
+        await Promise.allSettled(chunk.map(p => tileCache.add(p)));
+        done += chunk.length;
+        showStatus(`Downloading… ${Math.round(done / manifest.length * 100)}%`);
+      }
+      offlineBtn.classList.add('done');
+      showStatus('Chart cached for offline use', true);
+    } catch (e) {
+      showStatus('Download failed — check connection');
+    } finally {
+      offlineBtn.disabled = false;
+    }
+  });
+
+  checkOfflineReady();
 
   // ── Service Worker registration ──────────────────────────────────────────
   if ('serviceWorker' in navigator) {

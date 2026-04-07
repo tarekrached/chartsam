@@ -1,12 +1,13 @@
 /* Service Worker — SF Bay Nautical Chart PWA
  *
  * Strategy:
- *   - App shell (html, js, css, leaflet) → cache-first
+ *   - index.html / app.js → network-first (always pick up updates)
+ *   - Leaflet, manifest.json → cache-first (stable, versioned)
  *   - Tiles → cache-first (all pre-cached on install)
  *   - bounds.json / tile-manifest.json → network-first (allow updates)
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const SHELL_CACHE   = `shell-${CACHE_VERSION}`;
 const TILE_CACHE    = `tiles-${CACHE_VERSION}`;
 
@@ -69,8 +70,15 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // bounds.json / tile-manifest.json: network-first (pick up updates)
-  if (url.pathname.endsWith('bounds.json') || url.pathname.endsWith('tile-manifest.json')) {
+  // index.html, app.js, bounds.json, tile-manifest.json: network-first
+  // so updates are picked up without manual cache clearing
+  if (
+    url.pathname.endsWith('/') ||
+    url.pathname.endsWith('index.html') ||
+    url.pathname.endsWith('app.js') ||
+    url.pathname.endsWith('bounds.json') ||
+    url.pathname.endsWith('tile-manifest.json')
+  ) {
     event.respondWith(
       fetch(event.request)
         .then(r => {
@@ -83,7 +91,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Everything else: cache-first
+  // Everything else (leaflet, icons, manifest.json): cache-first
   event.respondWith(
     caches.match(event.request).then(r => r || fetch(event.request))
   );

@@ -5,5 +5,5 @@
   "north": 37.9932,
   "minZoom": 5,
   "maxZoom": 13,
-  "tileExtension": "jpg"
+  "tileExtension": "png"
 }

@@ -3,7 +3,6 @@ public/tiles/
 
 # Large source files — store separately (not in git)
 *.tif
-*.pdf
 CA_ENCs.zip
 ENC_ROOT/
 

@@ -6,7 +6,7 @@
  *   - bounds.json / tile-manifest.json → network-first (allow updates)
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const SHELL_CACHE   = `shell-${CACHE_VERSION}`;
 const TILE_CACHE    = `tiles-${CACHE_VERSION}`;
 
@@ -73,7 +73,11 @@ self.addEventListener('fetch', event => {
   if (url.pathname.endsWith('bounds.json') || url.pathname.endsWith('tile-manifest.json')) {
     event.respondWith(
       fetch(event.request)
-        .then(r => { caches.open(SHELL_CACHE).then(c => c.put(event.request, r.clone())); return r; })
+        .then(r => {
+          const clone = r.clone();
+          caches.open(SHELL_CACHE).then(c => c.put(event.request, clone));
+          return r;
+        })
         .catch(() => caches.match(event.request))
     );
     return;

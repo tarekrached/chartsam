@@ -151,6 +151,39 @@ that GCP is likely bad. Replace with the mean col from the clean rows for that m
 
 ---
 
+## Performance: Why Georeferencing Is Slow
+
+Three compounding reasons:
+
+**1. PDF rasterization on every read.**
+GDAL's PDF driver renders vector graphics to pixels on-the-fly. `detect_gcps.py` calls
+`band.ReadAsArray()` thousands of times (one per row-pair in the meridian scan, once per
+centroid measurement). Each call re-renders that strip of the PDF from scratch.
+
+**2. Source images are enormous.**
+18654 is 12952×16792 = ~217 million pixels. `gdal_translate` must rasterize all of that
+to write `chart_gcp_<n>.tif`; `gdalwarp -tps` must read and transform every output pixel.
+
+**3. TPS warp is compute-heavy.**
+Thin-plate spline evaluates a non-linear transform at every output pixel. Correct choice
+for polyconic charts, but unavoidably slow on 200M+ pixel rasters.
+
+### Easy win: pre-rasterize the PDF once
+
+```bash
+GDAL_PDF_DPI=400 gdal_translate -of GTiff \
+  -co TILED=YES -co COMPRESS=DEFLATE -co BIGTIFF=IF_SAFER \
+  charts/18654.pdf charts_rasterized/18654.tif
+```
+
+Then point `detect_gcps.py` and `tile_chart.py` at the TIF instead of the PDF. All
+subsequent reads (detection scans, centroid measurements, GCP embedding, warp) hit a
+memory-mappable tiled TIFF. Detection goes from minutes to seconds.
+
+`charts_rasterized/` should be gitignored alongside `charts/`.
+
+---
+
 ## Reading Coordinates from NOAA Chart PDFs
 
 `pdftotext` produces no useful output on NOAA chart PDFs (iTextSharp-generated, text not

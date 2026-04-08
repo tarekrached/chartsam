@@ -130,7 +130,7 @@ The y values don't match → tiles serve content from the wrong location
 
 **Fix: always use `--xyz`:**
 ```bash
-gdal2tiles.py --xyz --tilesize=512 -z 5-13 -r bilinear \
+gdal2tiles.py --xyz --tilesize=768 -z 5-14 -r bilinear \
   --tiledriver=PNG --processes=4 chart_mercator_crop.tif public/tiles/
 ```
 
@@ -173,27 +173,32 @@ Geographic bounds in `bounds.json` are hardcoded to the actual chart neatline
 
 ## Final Pipeline
 
+Georeferencing and tiling are separate steps. GCP metadata is stored in
+`georef/<n>.json` (committed to git) so tiles can be regenerated at any time
+without re-running detection.
+
 ```bash
 export PATH=/opt/homebrew/bin:$PATH
 
-# 1. Georeference: embeds 15 GCPs, TPS warp to Web Mercator
-python3 scripts/georeference_gcp.py
-# → chart_gcp.tif, chart_mercator.tif
+# 1. Detect GCPs and write georef metadata (once per chart)
+#    Interactive — confirms lon/lat assignments for detected graticule lines
+python3 scripts/detect_gcps.py 18649
+# → georef/18649.json
 
-# 2. Crop to neatline
-gdal_translate -srcwin 173 202 17455 13428 \
-  chart_mercator.tif chart_mercator_crop.tif
-
-# 3. Generate tiles (--xyz is REQUIRED for Leaflet)
-rm -rf public/tiles
-gdal2tiles.py --xyz --tilesize=512 -z 5-13 -r bilinear \
-  --tiledriver=PNG --processes=4 chart_mercator_crop.tif public/tiles/
-
-# 4. Write tile manifest + bounds for PWA/service worker
-python3 scripts/write_manifest.py
+# 2. Warp + tile from georef metadata
+#    Runs: gdal_translate (embed GCPs) → gdalwarp -tps → gdal_translate -srcwin → gdal2tiles
+python3 scripts/tile_chart.py 18649
+# → public/tiles/, public/bounds.json, public/tile-manifest.json
 ```
 
-Result: **181 JPEG tiles, 5.1 MB**, zoom 5–13, ~30–60 m positional accuracy.
+Tile spec: `--xyz --tilesize=768 -z 5-14 --tiledriver=PNG`
+
+Result: **~613 PNG tiles, ~48 MB**, zoom 5–14, ~30–60 m positional accuracy.
+768px tiles at 3× CSS density = pixel-perfect on Retina iPhone (3× DPR).
+Service worker pre-caches z5–13 on install (~22 MB); z14 cached lazily or via the offline button.
+
+The hardcoded chart 18649 values (GCPs, neatline, bounds) previously embedded in
+`scripts/georeference_gcp.py` are now stored in `georef/18649.json`.
 
 ---
 

@@ -5,13 +5,16 @@ View NOAA chart 18649 on iPhone offline with GPS position overlay.
 Hosted on GitHub Pages (HTTPS required for GPS API).
 
 ## Current State
-- ✅ 181 XYZ JPEG tiles generated (z=5–13, 5.1 MB), ~30–60 m accuracy
-- ✅ `public/bounds.json` — chart geographic bounds + zoom range
-- ✅ `public/tile-manifest.json` — list of all 181 tile paths
-- ✅ `public/index.html`, `app.js`, `sw.js`, `manifest.json` — rough drafts, need revision
-- ❌ Tiles not committed (gitignored, must regenerate locally)
-- ❌ No app icons (icon-192.png, icon-512.png)
-- ❌ Not deployed
+- ✅ ~613 XYZ PNG tiles (z=5–14, 768px, ~48 MB), ~30–60 m accuracy
+- ✅ `public/bounds.json` — chart geographic bounds + zoom range (maxZoom: 14)
+- ✅ `public/tile-manifest.json` — list of all tile paths
+- ✅ `public/index.html`, `app.js`, `sw.js`, `manifest.json` — complete
+- ✅ App icons (icon-192.png, icon-512.png) — compass rose on navy blue
+- ✅ Deployed to GitHub Pages (gh-pages branch via deploy.sh)
+- ✅ Offline download button — pre-caches all tiles on demand
+- ✅ Cache version shown in attribution label (e.g. "NOAA Chart 18649 · v6")
+- ✅ Service worker v6 — network-first for app shell, cache-first for tiles
+- ❌ Tiles not committed to git (gitignored, must regenerate locally with regen_tiles.sh)
 
 ---
 

@@ -1,6 +1,9 @@
 # Generated files — regenerate with scripts/
 public/tiles/
 
+# Source chart PDFs — download with scripts or manually
+charts/
+
 # Large source files — store separately (not in git)
 *.tif
 CA_ENCs.zip

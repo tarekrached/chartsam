@@ -1,0 +1,38 @@
+{
+  "chart": "18649",
+  "title": "Entrance to San Francisco Bay",
+  "source_pdf": "charts/18649.pdf",
+  "pdf_dimensions": { "width": 17648, "height": 13832 },
+  "gcps": [
+    { "pixel_col": 1554.0, "pixel_row":  3620, "lon": -122.6667, "lat": 37.9167 },
+    { "pixel_col": 1555.2, "pixel_row":  7262, "lon": -122.6667, "lat": 37.8333 },
+    { "pixel_col": 1532.0, "pixel_row": 10900, "lon": -122.6667, "lat": 37.7500 },
+    { "pixel_col": 4420.0, "pixel_row":  3620, "lon": -122.5833, "lat": 37.9167 },
+    { "pixel_col": 4420.5, "pixel_row":  7262, "lon": -122.5833, "lat": 37.8333 },
+    { "pixel_col": 4420.5, "pixel_row": 10900, "lon": -122.5833, "lat": 37.7500 },
+    { "pixel_col": 7307.5, "pixel_row":  3620, "lon": -122.5000, "lat": 37.9167 },
+    { "pixel_col": 7319.7, "pixel_row":  7262, "lon": -122.5000, "lat": 37.8333 },
+    { "pixel_col": 7307.5, "pixel_row": 10900, "lon": -122.5000, "lat": 37.7500 },
+    { "pixel_col": 10229.5, "pixel_row":  3620, "lon": -122.4167, "lat": 37.9167 },
+    { "pixel_col": 10195.0, "pixel_row":  7262, "lon": -122.4167, "lat": 37.8333 },
+    { "pixel_col": 10195.0, "pixel_row": 10900, "lon": -122.4167, "lat": 37.7500 },
+    { "pixel_col": 13083.0, "pixel_row":  3620, "lon": -122.3333, "lat": 37.9167 },
+    { "pixel_col": 13082.5, "pixel_row":  7262, "lon": -122.3333, "lat": 37.8333 },
+    { "pixel_col": 13082.5, "pixel_row": 10900, "lon": -122.3333, "lat": 37.7500 }
+  ],
+  "neatline": { "col": 173, "row": 202, "width": 17455, "height": 13428 },
+  "bounds": {
+    "west": -122.7059, "east": -122.2023,
+    "south": 37.6871, "north": 37.9932
+  },
+  "graticule": {
+    "meridian_spacing_arcmin": 5,
+    "parallel_spacing_arcmin": 5,
+    "meridians_detected": 27,
+    "parallels_detected": 3,
+    "px_per_arcmin_lon": 577.68,
+    "meridian_regression": "col = 375.92 + 577.68 * n, n=0 at 122°42'W",
+    "rms_residual_px": 3.2
+  },
+  "notes": "15 GCPs at 5 meridians × 3 parallels. Intersections measured directly (±80px centroid scan) rather than from regression estimates — regression had ~60–65px systematic bias. Warp: TPS to EPSG:3857."
+}

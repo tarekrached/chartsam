@@ -158,21 +158,16 @@ Fort Point, Alcatraz, Bay Bridge.
 ```bash
 export PATH=/opt/homebrew/bin:$PATH
 
-# 1. Georeference with GCPs (runs gdal_translate + gdalwarp -tps internally)
-python3 scripts/georeference_gcp.py
+# 1. Detect GCPs and write georef metadata to georef/18649.json
+#    (already done — file is committed; only re-run if chart source changes)
+python3 scripts/detect_gcps.py 18649
 
-# 2. Crop to neatline (removes margin black pixels from TPS warp)
-gdal_translate -srcwin 173 202 17455 13428 chart_mercator.tif chart_mercator_crop.tif
-
-# 3. Generate 512×512 JPEG tile pyramid, zoom 5–13 (~5 MB)
+# 2. Warp + tile from georef metadata
+#    Runs gdal_translate (embed GCPs) → gdalwarp -tps → gdal_translate -srcwin → gdal2tiles
 #    IMPORTANT: --xyz is required! gdal2tiles defaults to TMS y-axis (y=0 at south),
 #    but Leaflet uses XYZ (y=0 at north). Without --xyz, tiles appear at wrong locations.
-rm -rf public/tiles
-gdal2tiles.py --xyz --tilesize=512 -z 5-13 -r bilinear \
-  --tiledriver=JPEG --processes=4 chart_mercator_crop.tif public/tiles/
-
-# 3. Write tile manifest and bounds.json for the PWA
-python3 scripts/write_manifest.py
+python3 scripts/tile_chart.py 18649
+# → ~613 PNG tiles z5–14 at 768px, public/bounds.json, public/tile-manifest.json
 ```
 
 ---
@@ -181,14 +176,15 @@ python3 scripts/write_manifest.py
 
 | File | Description |
 |------|-------------|
-| `18649 SF Bay Nautical Chart.pdf` | Source scan (gitignored) |
-| `chart_gcp.tif` | WGS84 GeoTIFF with 15 embedded GCPs (gitignored) |
-| `chart_mercator.tif` | Web Mercator GeoTIFF, TPS warped (gitignored) |
-| `chart_mercator_crop.tif` | Mercator GeoTIFF cropped to neatline (gitignored) |
-| `scripts/georeference_gcp.py` | **Primary script** — GCP detection + warp |
-| `scripts/georeference.py` | Older affine-only version (superseded) |
+| `charts/18649.pdf` | Source scan (gitignored) |
+| `georef/18649.json` | GCPs, neatline, bounds — committed to git ✅ |
+| `chart_gcp.tif` | WGS84 GeoTIFF with 15 embedded GCPs (gitignored, derived) |
+| `chart_mercator.tif` | Web Mercator GeoTIFF, TPS warped (gitignored, derived) |
+| `chart_mercator_crop.tif` | Mercator GeoTIFF cropped to neatline (gitignored, derived) |
+| `scripts/detect_gcps.py` | **Primary script** — programmatic GCP detection; writes georef JSON |
+| `scripts/tile_chart.py` | Warp + tile pipeline driven by georef JSON |
 | `scripts/write_manifest.py` | Generates `bounds.json` + `tile-manifest.json` |
-| `public/tiles/` | XYZ tile pyramid, z=5–13, 512×512 JPEG (gitignored) |
+| `public/tiles/` | XYZ tile pyramid, z=5–14, 768px PNG (gitignored, derived) |
 | `public/index.html` | PWA shell |
 | `public/app.js` | Leaflet map + GPS locate + service worker registration |
 | `public/sw.js` | Service worker (offline tile caching) |

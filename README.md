@@ -22,15 +22,21 @@ public/          — the PWA (served from gh-pages branch)
   index.html
   app.js         — Leaflet map + GPS logic
   sw.js          — service worker, pre-caches all tiles
-  tiles/         — XYZ PNG tiles z5–13, 512px (gitignored, regen locally)
+  tiles/         — XYZ PNG tiles z5–14, 768px (gitignored, regen locally)
   bounds.json    — chart bounds + zoom range
   tile-manifest.json — list of all tile paths for SW pre-caching
 
-scripts/
-  georeference_gcp.py  — embeds 15 GCPs, TPS warp to Web Mercator
-  write_manifest.py    — builds bounds.json + tile-manifest.json
+georef/          — georeferencing metadata, one JSON per chart (committed ✅)
+  18649.json     — GCPs, neatline crop params, bounds for chart 18649
 
-regen_tiles.sh   — full tile pipeline (requires chart_mercator_crop.tif)
+charts/          — source PDF scans (gitignored, download separately)
+
+scripts/
+  detect_gcps.py   — programmatic GCP detection; writes georef/<n>.json
+  tile_chart.py    — warp + tile pipeline driven by georef/<n>.json
+  write_manifest.py — builds bounds.json + tile-manifest.json
+
+regen_tiles.sh   — full tile pipeline for chart 18649
 deploy.sh        — pushes public/ including tiles to gh-pages branch
 ```
 
@@ -41,14 +47,20 @@ Tiles are not committed to git (too large). To regenerate:
 ```bash
 export PATH=/opt/homebrew/bin:$PATH
 
-# Georeference (only needed if chart source changes)
-python3 scripts/georeference_gcp.py
-gdal_translate -srcwin 173 202 17455 13428 chart_mercator.tif chart_mercator_crop.tif
-
-# Regen tiles + manifest
-./regen_tiles.sh
+# Tile from existing georef metadata (no re-detection needed)
+python3 scripts/tile_chart.py 18649
 
 # Deploy to GitHub Pages
+./deploy.sh
+```
+
+To add a new chart from scratch:
+```bash
+# 1. Detect GCPs and write georef JSON (interactive — confirms lon/lat assignments)
+python3 scripts/detect_gcps.py 18654
+
+# 2. Review and commit georef/18654.json, then tile
+python3 scripts/tile_chart.py 18654
 ./deploy.sh
 ```
 

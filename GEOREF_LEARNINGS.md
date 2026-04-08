@@ -1,7 +1,7 @@
 # Georeferencing Learnings — detect_gcps.py development
 
 Notes captured after building `scripts/detect_gcps.py` from scratch, validated on
-chart 18649, and partially applied to chart 18654.
+chart 18649, and fully applied to chart 18654 (San Pablo Bay).
 
 ---
 
@@ -114,32 +114,81 @@ of the peak. Distant features are completely excluded.
 
 ---
 
-## Chart 18654 — Specific Findings
+## Chart 18654 — Completed
 
 ### Dimensions and structure
-- 12952 × 16792 px at 400 DPI
-- Inset sub-chart in **upper-left corner**: rows 259–2985, cols 175–~340
-  - Inset has a solid right border at col ~340 that scores 3200 (exceeds main meridians)
+- 12952 × 16792 px at 400 DPI — "San Pablo Bay" (inside SF Bay, north of the Gate)
+- Inset sub-chart in **upper-left corner**: "Continuation of Petaluma River", rows 259–2985, cols 175–~340
+  - Inset has a solid right border at col ~340 that scores 3200 VP (exceeds main meridians at 2073–2804)
   - Solution: restrict scan region to rows 2985–16090, cols 175–12776 (excludes inset)
-- **4 main meridians** detected at approximately cols 2870, 5745, 8620, 11500
-  - Spacing ~2875 px/tick
-  - If 5' interval: ~575 px/arcmin (consistent with ~1:40,000 scale)
-- **4 main parallels** detected at approximately rows 2985, 6627, 10271, 13907
-  - Spacing ~3644 px/tick
-  - If 5' interval: ~729 px/arcmin — suspicious (should be ~455 at this latitude)
-  - More likely 6' interval: ~607 px/arcmin — or chart covers more latitude than 18649
+- **4 main meridians** at cols ~2870, 5745, 8620, 11500 — spacing 2875 px/tick
+- **4 main parallels** at rows ~2985, 6627, 10271, 13907 — spacing 3644 px/tick
 
-### Coordinates (still unknown — need to read PDF border labels)
-The chart covers an area near 38°N, 123°W (likely Point Reyes / Bodega Bay area).
-To complete georef/18654.json, open `charts/18654.pdf` in a PDF viewer and read:
-- Top/bottom border: longitude tick labels (e.g. "123°05'W")
-- Left/right border: latitude tick labels (e.g. "38°20'N")
+### Coordinates (confirmed by reading PDF border labels)
+- Meridians: **122°25', 122°20', 122°15', 122°10' W** — 5' interval, 575.4 px/arcmin
+- Parallels: **38°15', 38°10', 38°05', 38°00' N** — 5' interval
 
-Then run: `python3 scripts/detect_gcps.py 18654` interactively with:
-- Neatline: top=259, left=175, right=12776, bottom=16254
-- Scan region: top=2985, left=175, right=12776, bottom=16090
-- Keep 4 meridians, keep 4 parallels
-- Enter the tick interval (probably 5') and first meridian/parallel coordinates
+Parallel pixel spacing (3644 px/5') = 728.8 px/arcmin for latitude. At 38°N, the
+latitude scale is ~1/cos(38°) ≈ 1.27× the longitude scale: 575 × 1.27 = 730 px/arcmin.
+The "suspicious" earlier estimate of 729 px/arcmin was correct for a 5' parallel interval
+— the discrepancy from the longitude scale is expected due to the latitude convergence factor.
+
+### GCP measurement results
+- 16 GCPs, regression RMS 0.50 px
+- 2 col outliers fixed (see "GCP Outlier Fixes" below)
+- See `georef/18654.json` for full GCP table
+
+### GCP Outlier Fixes
+Two GCPs had bad col measurements, both due to competing dark features:
+
+| GCP | Measured col | Expected (~) | Cause | Fix |
+|-----|-------------|--------------|-------|-----|
+| (-122.3333, 38.25) at row 2985 | 5680 | 5745 | Competing feature at col 5682 scored equally (VP=44 vs 44). Row 2985 is the inset lower boundary — high noise. | Substituted per-meridian mean col from other 3 rows (5745.8) |
+| (-122.1667, 38.00) at row 13907 | 11427 | 11499 | Max VP score = 3 across all columns — essentially no signal at all. | Substituted per-meridian mean from other 2 rows (11499.1) |
+
+**Rule**: When per-meridian col spread across parallels is > 20 px for a single GCP,
+that GCP is likely bad. Replace with the mean col from the clean rows for that meridian.
+
+---
+
+## Reading Coordinates from NOAA Chart PDFs
+
+`pdftotext` produces no useful output on NOAA chart PDFs (iTextSharp-generated, text not
+embedded as selectable objects). Must read tick labels visually from a rendered image.
+
+### Efficient approach (no PDF viewer needed)
+```bash
+# 1. Overview — identify chart title, approximate extent, inset location
+GDAL_PDF_DPI=50 gdal_translate -of PNG charts/18654.pdf /tmp/overview.png
+
+# 2. Read tick labels — render at 200 DPI, crop margin areas
+GDAL_PDF_DPI=200 gdal_translate -of PNG charts/18654.pdf /tmp/chart_200.png
+
+# Longitude: crop below top neatline, centred on each meridian column
+# Latitude:  crop right of left neatline, centred on each parallel row
+```
+
+At 200 DPI the image is 1/2 linear scale of the 400 DPI raster. Convert coordinates:
+`col_200 = col_400 / 2`, `row_200 = row_400 / 2`.
+
+### Where the labels are
+- **Longitude labels**: just **below** the top neatline (rows nl_top to nl_top+100 at 400 DPI).
+  The label text is centred horizontally on the tick's column.
+- **Latitude labels**: just **outside** the right (or left) neatline. The right margin
+  shows the full `38° 15'` form; left margin often shows only the minutes part.
+
+### Sub-tick label confusion
+NOAA charts have 1-arcminute sub-ticks between 5' major ticks. Each minute tick may also
+have 30-arcsecond sub-ticks labeled with double-prime (`50"`) not single-prime (`50'`).
+If a margin crop near a parallel row shows `50"` instead of the expected `15'`, the crop
+is off-centre — try a wider vertical range to find the full `38° 15'` label on the right margin.
+
+### Parallel spacing cross-check
+Expected latitude pixel scale ≈ lon_px_per_arcmin / cos(lat):
+- At 38°N: lat_px_per_arcmin ≈ 575 / cos(38°) ≈ 730 px/arcmin
+- 5' parallel spacing: ~3644 px ✓
+- If detected spacing doesn't match any reasonable interval, re-check the inset boundary —
+  a thick inset border can be misidentified as a parallel.
 
 ---
 
@@ -178,17 +227,29 @@ Using `gdalwarp -tps` in tile_chart.py is correct for polyconic-projection chart
 
 ## Workflow Summary
 
+### New chart from scratch
 ```bash
-# Detect GCPs for a new chart (interactive TTY required)
-python3 scripts/detect_gcps.py 18654
+# 1. Identify coordinates (no PDF viewer needed)
+GDAL_PDF_DPI=50 gdal_translate -of PNG charts/<n>.pdf /tmp/overview.png   # read title/extent
+GDAL_PDF_DPI=200 gdal_translate -of PNG charts/<n>.pdf /tmp/chart_200.png # read tick labels
 
-# Validate against existing georef
-python3 scripts/detect_gcps.py 18649 --validate
+# 2. Detect GCPs (interactive — needs a real TTY)
+python3 scripts/detect_gcps.py <n>
 
-# After georef/<n>.json is written:
+# 3. Generate tiles
 python3 scripts/tile_chart.py <n>
 ./deploy.sh
 ```
+
+### Validate existing georef
+```bash
+python3 scripts/detect_gcps.py 18649 --validate
+```
+
+### Fix bad GCPs without re-running interactive mode
+If a centroid measurement is bad (competing feature, no signal), edit `georef/<n>.json`
+directly and replace the bad `pixel_col` with the mean from the other parallels for that
+meridian. The TPS warp tolerates small per-GCP errors well.
 
 The JSON written to `georef/<n>.json` drives the entire tile pipeline via
 `scripts/tile_chart.py` — no manual GDAL commands needed afterward.

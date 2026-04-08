@@ -15,3 +15,6 @@ ENC_ROOT/
 # Python
 __pycache__/
 *.pyc
+
+# Claude Code local settings (personal permission history)
+.claude/settings.local.json

@@ -6,10 +6,18 @@ Run this after gdal2tiles.py. The manifest is used by the service worker
 to pre-cache all tiles for offline use.
 """
 
+import argparse
 import json
 import math
 import os
 import xml.etree.ElementTree as ET
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--west",  type=float, default=None)
+ap.add_argument("--east",  type=float, default=None)
+ap.add_argument("--south", type=float, default=None)
+ap.add_argument("--north", type=float, default=None)
+_args, _ = ap.parse_known_args()
 
 TILES_DIR   = "public/tiles"
 MANIFEST    = "public/tile-manifest.json"
@@ -56,9 +64,11 @@ for z_dir in os.listdir(TILES_DIR):
 zoom_levels = sorted(zoom_levels)
 tile_ext = tile_ext or "jpg"
 
-# Use the actual chart neatline bounds (not tile extents, which are much larger at low zoom)
-CHART_W, CHART_E = -122.7059, -122.2023
-CHART_S, CHART_N =  37.6871,   37.9932
+# Use bounds from CLI args if provided, else fall back to chart 18649 defaults
+CHART_W = _args.west  if _args.west  is not None else -122.7059
+CHART_E = _args.east  if _args.east  is not None else -122.2023
+CHART_S = _args.south if _args.south is not None else  37.6871
+CHART_N = _args.north if _args.north is not None else  37.9932
 
 bounds = {
     "west":  CHART_W,

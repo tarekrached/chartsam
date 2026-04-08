@@ -1,0 +1,128 @@
+{
+  "chart": "18654",
+  "title": "San Pablo Bay",
+  "source_pdf": "charts/18654.pdf",
+  "pdf_dimensions": {
+    "width": 12952,
+    "height": 16792
+  },
+  "gcps": [
+    {
+      "pixel_col": 2863.1,
+      "pixel_row": 2918,
+      "lon": -122.4167,
+      "lat": 38.25
+    },
+    {
+      "pixel_col": 2868.9,
+      "pixel_row": 6628,
+      "lon": -122.4167,
+      "lat": 38.1667
+    },
+    {
+      "pixel_col": 2868.9,
+      "pixel_row": 10270,
+      "lon": -122.4167,
+      "lat": 38.0833
+    },
+    {
+      "pixel_col": 2869.3,
+      "pixel_row": 13908,
+      "lon": -122.4167,
+      "lat": 38.0
+    },
+    {
+      "pixel_col": 5745.8,
+      "pixel_row": 2934,
+      "lon": -122.3333,
+      "lat": 38.25
+    },
+    {
+      "pixel_col": 5746.2,
+      "pixel_row": 6628,
+      "lon": -122.3333,
+      "lat": 38.1667
+    },
+    {
+      "pixel_col": 5745.3,
+      "pixel_row": 10270,
+      "lon": -122.3333,
+      "lat": 38.0833
+    },
+    {
+      "pixel_col": 5746.0,
+      "pixel_row": 13907,
+      "lon": -122.3333,
+      "lat": 38.0
+    },
+    {
+      "pixel_col": 8622.5,
+      "pixel_row": 2983,
+      "lon": -122.25,
+      "lat": 38.25
+    },
+    {
+      "pixel_col": 8622.6,
+      "pixel_row": 6625,
+      "lon": -122.25,
+      "lat": 38.1667
+    },
+    {
+      "pixel_col": 8620.9,
+      "pixel_row": 10270,
+      "lon": -122.25,
+      "lat": 38.0833
+    },
+    {
+      "pixel_col": 8622.7,
+      "pixel_row": 13907,
+      "lon": -122.25,
+      "lat": 38.0
+    },
+    {
+      "pixel_col": 11497.6,
+      "pixel_row": 2980,
+      "lon": -122.1667,
+      "lat": 38.25
+    },
+    {
+      "pixel_col": 11499.8,
+      "pixel_row": 6628,
+      "lon": -122.1667,
+      "lat": 38.1667
+    },
+    {
+      "pixel_col": 11498.3,
+      "pixel_row": 10267,
+      "lon": -122.1667,
+      "lat": 38.0833
+    },
+    {
+      "pixel_col": 11499.1,
+      "pixel_row": 13908,
+      "lon": -122.1667,
+      "lat": 38.0
+    }
+  ],
+  "neatline": {
+    "col": 175,
+    "row": 259,
+    "width": 12601,
+    "height": 15995
+  },
+  "bounds": {
+    "west": -122.46,
+    "east": -122.14,
+    "south": 37.97,
+    "north": 38.28
+  },
+  "graticule": {
+    "meridian_spacing_arcmin": 5,
+    "parallel_spacing_arcmin": 5,
+    "meridians_detected": 4,
+    "parallels_detected": 4,
+    "px_per_arcmin_lon": 575.4,
+    "rms_residual_px": 0.5
+  },
+  "notes": "16 GCPs at 4 meridians \u00d7 4 parallels. Intersections measured directly (\u00b180 px centroid scan). Warp: TPS to EPSG:3857. Scan region restricted to rows 2985\u201316090, cols 175\u201312776 (inset 'Continuation of Petaluma River' excluded). Meridians: 122\u00b025'\u2013122\u00b010'W at 5' intervals. Parallels: 38\u00b015'\u201338\u00b000'N at 5' intervals."
+}

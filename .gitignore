@@ -6,6 +6,9 @@ charts/
 
 # Large source files — store separately (not in git)
 *.tif
+
+# Pre-rasterized chart TIFs — regenerate with scripts/prerasterize.py
+charts_rasterized/
 CA_ENCs.zip
 ENC_ROOT/
 

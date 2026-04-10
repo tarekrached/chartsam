@@ -36,15 +36,19 @@ def main():
 
     chart_num = sys.argv[1]
     georef    = os.path.join(REPO, "georef", f"{chart_num}.json")
-    pdf       = os.path.join(REPO, "charts", f"{chart_num}.pdf")
+    tif_path  = os.path.join(REPO, "charts_rasterized", f"{chart_num}.tif")
 
     if not os.path.exists(georef):
         print(f"ERROR: {georef} not found")
         print(f"  Run: python3 scripts/detect_gcps.py {chart_num}")
         sys.exit(1)
-    if not os.path.exists(pdf):
-        print(f"ERROR: {pdf} not found — download the NOAA chart PDF first")
+    if not os.path.exists(tif_path):
+        print(f"ERROR: {tif_path} not found.")
+        print(f"  Pre-rasterize first:")
+        print(f"    python3 scripts/prerasterize.py {chart_num}")
         sys.exit(1)
+    src = tif_path
+    print(f"  Using pre-rasterized TIF: {tif_path}")
 
     with open(georef) as f:
         ref = json.load(f)
@@ -72,13 +76,16 @@ def main():
     run(["gdal_translate", "-a_srs", "EPSG:4326"] + gcp_args
         + ["-co", "TILED=YES", "-co", "COMPRESS=DEFLATE",
            "-co", "PREDICTOR=2", "-co", "BIGTIFF=IF_SAFER",
-           pdf, gcp_tif])
+           src, gcp_tif])
 
     # ── Step 2: TPS warp to Web Mercator ────────────────────────────────────
     print(f"\n── Step 2: TPS warp → {os.path.basename(merc_tif)} ─────────────")
     print("  (thin-plate spline — may take several minutes ...)")
     run(["gdalwarp",
-         "-tps",
+         "-tps",     # Thin-plate spline: required for polyconic projection.
+                     # NOAA charts have slightly curved meridians (~22 px over chart height).
+                     # Affine warp cannot model this; TPS fits the residual distortion.
+                     # Trade-off: TPS is slow on large rasters — use charts_rasterized/ to speed up.
          "-t_srs", "EPSG:3857",
          "-r", "bilinear",
          "-co", "TILED=YES",
@@ -107,8 +114,11 @@ def main():
         shutil.rmtree(tiles_dir)
 
     run(["gdal2tiles.py",
-         "--xyz",
-         "--tilesize=768",
+         "--xyz",            # XYZ tile convention (y=0 at top). Without this, gdal2tiles
+                             # uses TMS (y=0 at bottom), flipping the y-axis → black tiles
+                             # in Leaflet. This flag is mandatory.
+         "--tilesize=768",   # 768px tiles declared as tileSize:256 in Leaflet → 3× CSS pixel
+                             # density, pixel-perfect on Retina. Do NOT add zoomOffset:-1.
          "-z", "5-14",
          "-r", "bilinear",
          "--tiledriver=PNG",

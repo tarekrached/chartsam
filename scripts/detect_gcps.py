@@ -2,12 +2,21 @@
 """
 detect_gcps.py — Programmatic GCP detection for NOAA nautical charts.
 
-Reads charts/<n>.pdf, detects graticule intersections, prompts for
-coordinate assignment, and writes georef/<n>.json.
+Reads charts_rasterized/<n>.tif (pre-rasterized via prerasterize.py),
+detects graticule intersections, prompts for coordinate assignment, and
+writes georef/<n>.json.
 
 Usage:
     python3 scripts/detect_gcps.py 18654             # interactive — new chart
     python3 scripts/detect_gcps.py 18649 --validate  # compare to existing georef JSON
+    python3 scripts/detect_gcps.py 18649 --preview   # render overview PNGs and exit
+
+Projection: the chart's title block shows the projection used. Most modern NOAA
+coastal charts are Mercator (converted from polyconic after 1910); Great Lakes
+charts remain polyconic. Charts 18649 and 18654 show ~22 px of meridian column
+drift over chart height in pixel space — likely scan/digitisation distortion or
+a conformal conic variant. TPS warp (gdalwarp -tps) handles any such residual
+non-linearity regardless of the named projection; affine warp cannot.
 """
 
 import sys, os, json, math, argparse
@@ -17,8 +26,11 @@ from osgeo import gdal
 gdal.UseExceptions()
 
 REPO            = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BLACK_THRESH    = 60   # R < 60  →  "black" pixel
-CENTROID_HALF   = 80   # ±px for intersection centroid scan
+BLACK_THRESH    = 60   # R < 60 → "black". Works for all NOAA scans seen so far;
+                        # change only if a chart uses unusually light ink.
+CENTROID_HALF   = 80   # ±80 px search window for centroid measurement. Wider than
+                        # the ~22 px meridian curve, but stays well within the
+                        # ~575 px/arcmin inter-meridian spacing.
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +167,10 @@ def _greedy_min_spacing(candidates, scores, min_spacing):
     Greedy selection: sort candidates by score desc, then accept each candidate
     that is at least min_spacing away from all previously accepted ones.
     Returns accepted candidates (in ascending order).
+
+    Greedy selection is preferred over a fixed threshold because VP score levels
+    vary between charts (coastline density, ink contrast). A threshold that works
+    for 18649 would reject real meridians on a busier chart.
     """
     if len(candidates) == 0:
         return np.array([], dtype=int)
@@ -242,6 +258,11 @@ def detect_parallels(band, par_col, nl_top, img_w, img_h, nl_bottom=None,
     false positives from coastlines, annotations, etc.
 
     Returns parallel_rows array (sorted north→south, i.e. ascending row).
+
+    90th percentile threshold: robust to varying chart contrast. 97th percentile
+    found 106 spurious candidates on 18649 (only 3 real parallels).
+    strip_half = img_w // 5: a 40%-width strip gives good SNR. Narrower strips
+    fail when a coastline runs through the strip — the parallel signal is swamped.
     """
     if nl_bottom is None:
         nl_bottom = img_h - nl_top
@@ -279,6 +300,26 @@ def detect_parallels(band, par_col, nl_top, img_w, img_h, nl_bottom=None,
 
     print(f"  {len(parallel_rows)} parallels — rows {list(parallel_rows)}")
     return parallel_rows
+
+
+def detect_inset_boundary(band, nl_top, nl_left, nl_right, nl_bottom, img_w, img_h):
+    """
+    Scan the top 30% of the chart interior for anomalously strong horizontal lines
+    (solid inset borders score 10-100x higher than dashed parallels).
+    Returns (boundary_row, score) or None if no inset detected.
+
+    Parallels score ~500-700; solid inset border scores 10000+.
+    The 5000 threshold is safely between these: chart 18649 has no inset
+    (max HP row score ~700); chart 18654's inset border scores ~12000.
+    """
+    search_bottom = nl_top + (nl_bottom - nl_top) // 3
+    w = nl_right - nl_left
+    strip = band.ReadAsArray(nl_left, nl_top, w, search_bottom - nl_top)
+    row_score = _horizontal_persistence(strip)
+    if row_score.max() < 5000:   # no anomalous line found
+        return None
+    boundary_local = int(np.argmax(row_score))
+    return nl_top + boundary_local, float(row_score[boundary_local])
 
 
 # ---------------------------------------------------------------------------
@@ -377,6 +418,23 @@ def interactive_mode(chart_num, band, img_w, img_h):
     nl_right  = int(prompt("Neatline right col",  nl_right_d))
     nl_bottom = int(prompt("Neatline bottom row", nl_bot_d))
 
+    print("\n─── 1.5. Inset detection ────────────────────────────────────────────")
+    print("  Scanning for inset boundary in top 30% of chart interior ...")
+    inset_result = detect_inset_boundary(
+        band, nl_top, nl_left, nl_right, nl_bottom, img_w, img_h
+    )
+    default_scan_top = nl_top
+    if inset_result is not None:
+        boundary_row, boundary_score = inset_result
+        print(f"  Detected potential inset boundary at row {boundary_row} "
+              f"(score {boundary_score:.0f}).")
+        print("  Inset sub-charts (different scale) contaminate meridian/parallel detection.")
+        print(f"  Suggested scan region: rows {boundary_row}–{nl_bottom}, "
+              f"cols {nl_left}–{nl_right}")
+        default_scan_top = boundary_row
+    else:
+        print("  No inset boundary detected — full chart interior will be scanned.")
+
     # Charts with insets have non-rectangular chart areas.  Let the user restrict
     # the SCAN REGION for meridian/parallel detection to the main chart body.
     print("\n─── 2. Scan region (for detection only) ─────────────────────────────")
@@ -384,7 +442,7 @@ def interactive_mode(chart_num, band, img_w, img_h):
     print("  sub-region of the MAIN chart body to scan.  This keeps inset borders")
     print("  and their graticule from interfering with main-chart detection.")
     print("  (Press Enter to use the full neatline as the scan region.)")
-    scan_top    = int(prompt("Scan top row",    nl_top))
+    scan_top    = int(prompt("Scan top row",    default_scan_top))
     scan_left   = int(prompt("Scan left col",   nl_left))
     scan_right  = int(prompt("Scan right col",  nl_right))
     scan_bottom = int(prompt("Scan bottom row", nl_bottom))
@@ -481,6 +539,28 @@ def interactive_mode(chart_num, band, img_w, img_h):
                         meridian_lons, parallel_lats, img_w, img_h)
     print(f"\n  {len(gcps)} GCPs measured.")
 
+    # Per-meridian col spread check: >20 px spread across parallels on the same
+    # meridian typically indicates a bad GCP measurement (solid non-graticule line
+    # dominated the centroid scan).
+    lon_to_cols: dict = {}
+    for g in gcps:
+        lon_to_cols.setdefault(g['lon'], []).append(g['pixel_col'])
+    for lon, cols in lon_to_cols.items():
+        mean_col = sum(cols) / len(cols)
+        for g in gcps:
+            if g['lon'] != lon:
+                continue
+            deviation = abs(g['pixel_col'] - mean_col)
+            if deviation > 20:
+                print(f"\n  WARN: GCP ({lon}, {g['lat']}) col={g['pixel_col']:.1f} "
+                      f"deviates {deviation:.1f} px from per-meridian mean {mean_col:.1f}")
+                replace = input(
+                    f"  Replace with mean col {mean_col:.1f}? [y/n]: "
+                ).strip().lower()
+                if replace == 'y':
+                    g['pixel_col'] = round(mean_col, 1)
+                    print("  → Replaced.")
+
     print("\n─── 7. Chart bounds ─────────────────────────────────────────────────")
     print("  Enter from border labels (approximate; GCPs drive accuracy).")
     west  = float(prompt("West  lon", round(min(g['lon'] for g in gcps) - 0.05, 4)))
@@ -506,8 +586,8 @@ def interactive_mode(chart_num, band, img_w, img_h):
     return {
         "chart":      chart_num,
         "title":      title,
-        "source_pdf": f"charts/{chart_num}.pdf",
-        "pdf_dimensions": {"width": img_w, "height": img_h},
+        "source_tif": f"charts_rasterized/{chart_num}.tif",
+        "tif_dimensions": {"width": img_w, "height": img_h},
         "gcps": gcps,
         "neatline": {
             "col":    nl_left,
@@ -536,8 +616,9 @@ def validate_mode(chart_num, band, img_w, img_h, ref_path):
     with open(ref_path) as f:
         ref = json.load(f)
 
-    ref_w = ref['pdf_dimensions']['width']
-    ref_h = ref['pdf_dimensions']['height']
+    dims  = ref.get('tif_dimensions') or ref.get('pdf_dimensions', {})
+    ref_w = dims.get('width', '?')
+    ref_h = dims.get('height', '?')
     print(f"\n  Reference:  {ref_w}×{ref_h} px")
     print(f"  This open:  {img_w}×{img_h} px")
     if img_w != ref_w or img_h != ref_h:
@@ -618,27 +699,62 @@ def validate_mode(chart_num, band, img_w, img_h, ref_path):
 
 
 # ---------------------------------------------------------------------------
+# Preview mode
+# ---------------------------------------------------------------------------
+
+def preview_mode(chart_num, pdf_path):
+    """Render at 50 DPI for overview and 200 DPI for reading tick labels. Exits after."""
+    import subprocess
+    out50  = f"/tmp/chart_{chart_num}_50dpi.png"
+    out200 = f"/tmp/chart_{chart_num}_200dpi.png"
+    env50  = {**os.environ, "GDAL_PDF_DPI": "50"}
+    env200 = {**os.environ, "GDAL_PDF_DPI": "200"}
+    print(f"  Rendering 50 DPI → {out50} ...")
+    subprocess.run(["gdal_translate", "-of", "PNG", pdf_path, out50],
+                   env=env50, check=True)
+    print(f"  Rendering 200 DPI → {out200} ...")
+    subprocess.run(["gdal_translate", "-of", "PNG", pdf_path, out200],
+                   env=env200, check=True)
+    print(f"\n  Scale note: col_400 / 2 = col_200 (200 DPI is half-scale of working raster)")
+    print(f"  Longitude labels: just below top neatline (rows nl_top to nl_top+100 at 400 DPI)")
+    print(f"  Latitude labels:  outside right neatline. Right margin shows full '38° 15'' form.")
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
 def main():
-    ap = argparse.ArgumentParser(description="Detect GCPs in a NOAA chart PDF")
+    ap = argparse.ArgumentParser(description="Detect GCPs in a NOAA chart TIF")
     ap.add_argument("chart_num")
     ap.add_argument("--validate", action="store_true",
                     help="Compare detection to existing georef/<n>.json")
+    ap.add_argument("--preview", action="store_true",
+                    help="Render chart at 50 DPI (overview) and 200 DPI (tick labels) then exit")
     args = ap.parse_args()
 
     chart_num = args.chart_num
     pdf_path  = os.path.join(REPO, "charts", f"{chart_num}.pdf")
+    tif_path  = os.path.join(REPO, "charts_rasterized", f"{chart_num}.tif")
     out_path  = os.path.join(REPO, "georef", f"{chart_num}.json")
 
-    if not os.path.exists(pdf_path):
-        print(f"ERROR: {pdf_path} not found")
+    if args.preview:
+        if not os.path.exists(pdf_path):
+            print(f"ERROR: {pdf_path} not found — download the NOAA chart PDF first")
+            sys.exit(1)
+        preview_mode(chart_num, pdf_path)
+        sys.exit(0)
+
+    if not os.path.exists(tif_path):
+        print(f"ERROR: {tif_path} not found.")
+        print(f"  Pre-rasterize first:")
+        print(f"    python3 scripts/prerasterize.py {chart_num}")
         sys.exit(1)
+    src_path = tif_path
 
     print(f"\n=== detect_gcps.py — Chart {chart_num} ===")
-    print(f"  Opening {pdf_path} ...")
-    ds   = gdal.Open(pdf_path)
+    print(f"  Opening {tif_path} ...")
+    ds   = gdal.Open(src_path)
     img_w = ds.RasterXSize
     img_h = ds.RasterYSize
     print(f"  Dimensions: {img_w} × {img_h} px  ({ds.RasterCount} band(s))")

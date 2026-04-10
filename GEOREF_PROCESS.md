@@ -7,8 +7,19 @@ Written for future-you picking this up cold.
 
 ## The Problem
 
-The PDF has no embedded georeferencing (it's a raster scan, not a GeoPDF).
-We need to map pixel coordinates → WGS84 lat/lon.
+The PDF has no usable embedded georeferencing. We need to map pixel coordinates → WGS84 lat/lon.
+
+**What we investigated:**
+GDAL identifies the file as `Driver: PDF/Geospatial PDF` but `gdalinfo` returns zero GCPs,
+no projection string, and an identity geotransform. NOAA used iTextSharp to produce these
+PDFs (creation date 2018) — they are PDF conversions of traditional polyconic paper charts,
+not the newer NOAA Custom Chart output (which does embed WGS84/Mercator projection
+parameters). The Geospatial PDF extension fields were simply not populated.
+
+**BSB/KAP (RNC) alternative:** NOAA's legacy Raster Navigational Charts shipped in BSB/KAP
+format with reference points (GCPs) embedded in the file header, which GDAL could read
+directly. However, NOAA discontinued the entire RNC program on **December 4, 2024** — no
+BSB/KAP files exist for current charts.
 
 ---
 
@@ -111,7 +122,10 @@ Offsets are **inconsistent in direction** (some SE, some NW) → not a systemati
 georeferencing error. This is the **inherent positional accuracy of the printed chart**
 (1:40,000 NOAA paper charts are rated ±40–75 m).
 
-**No further improvement is possible without a GeoPDF source.**
+**No further improvement is possible through the georeferencing step.** The offsets reflect
+the inherent positional accuracy of the source chart compilation, not the warp method.
+ENC overlay is the right validation tool: compare warped output to ENC buoy/landmark
+positions to confirm residuals are random (not systematic).
 
 ---
 

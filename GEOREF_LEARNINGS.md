@@ -5,6 +5,74 @@ chart 18649, and fully applied to chart 18654 (San Pablo Bay).
 
 ---
 
+## Source Format and Georeferencing Strategy
+
+### What these PDFs actually are
+
+These are **PDF conversions of traditional NOAA polyconic paper charts**, produced using
+iTextSharp (confirmed from `gdalinfo` metadata: `PRODUCER=iTextSharp 5.5.13`, 2018).
+They are **not** scanned paper charts, and they are **not** the newer NOAA Custom Chart
+output (which generates fresh charts from ENC vector data in WGS84/Mercator).
+
+GDAL identifies them as `Driver: PDF/Geospatial PDF` but the geospatial extension fields
+were not populated by NOAA:
+
+```
+GCPs: 0
+Projection: None
+GeoTransform: (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)   ← identity, i.e. pixel = pixel
+```
+
+No embedded georeferencing is available. The graticule detection approach is the only path.
+
+### Why not use BSB/KAP (RNC) reference points?
+
+NOAA's legacy Raster Navigational Chart (RNC) program shipped charts in BSB/KAP format
+with reference points embedded in the file header — equivalent to our detected GCPs, but
+pre-filled. GDAL's BSB driver could read these directly. However:
+
+- NOAA discontinued the entire RNC program on **December 4, 2024**
+- No BSB/KAP files exist for current or updated charts
+- The underlying source data (polyconic raster) was identical to the PDF, so accuracy
+  would have been the same
+
+### Why graticule GCPs are the right method
+
+Graticule intersections are the **standard GCP type for nautical charts** — it's what the
+BSB/KAP format embedded. Using the printed lat/lon grid as ground truth is preferred over
+identifying geographic features because:
+
+- The graticule is the mathematical skeleton of the projection itself — no ambiguity
+- Features (buoys, lights) can move or be misidentified; meridians and parallels cannot
+- Academic literature notes that feature-based GCPs produce "significantly larger errors"
+  when a graticule is available
+
+### Why not use ENC features as GCPs?
+
+ENCs (Electronic Navigational Charts, S-57 format) are updated weekly and carry
+authoritative WGS84 coordinates. However, using ENC features as GCPs would mean:
+- Identifying the same feature in both the raster and ENC vector data
+- Measuring its pixel centroid in the chart image
+- This introduces misidentification risk and measurement uncertainty
+
+**Better use of ENCs: post-warp validation.** After tiling, overlay ENC buoy/landmark
+positions on the warped output and measure offsets. If offsets are random in direction
+(some NW, some SE) it confirms the residuals are from chart compilation accuracy, not
+a systematic georeferencing error. The 40–56 m landmark offsets measured for chart 18649
+are random in direction — this is the expected outcome.
+
+### Accuracy expectations by chart scale
+
+| Chart scale | 1 mm plotted → ground | Expected accuracy |
+|---|---|---|
+| 1:40,000 (18649) | 40 m | ±40–75 m |
+| 1:80,000 (18654) | 80 m | ±80–100 m |
+
+A 20 px col error at 400 DPI ≈ 1.27 mm on paper ≈ 100 m at 1:80,000 scale.
+This is the ceiling from chart scale, not from the detection method.
+
+---
+
 ## NOAA Chart Structure
 
 ### Physical layout (400 DPI scans)

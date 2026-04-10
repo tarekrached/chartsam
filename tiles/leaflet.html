@@ -3,7 +3,7 @@
           <head>
             <meta charset="utf-8">
             <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
-            <title>chart_mercator_crop.tif</title>
+            <title>chart_mercator_18649_crop.tif</title>
 
             <!-- Leaflet -->
             <link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.5/dist/leaflet.css" />
@@ -54,7 +54,7 @@
 
         // Map
         var map = L.map('map', {
-            center: [37.84141333448672, -122.45408518148582],
+            center: [37.841668943721174, -122.45356598601458],
             zoom: 14,
             minZoom: 5,
             maxZoom: 14,
@@ -72,7 +72,7 @@
             return this._div;
         };
         title.update = function(props) {
-            this._div.innerHTML = "chart_mercator_crop.tif";
+            this._div.innerHTML = "chart_mercator_18649_crop.tif";
         };
         title.addTo(map);
 
@@ -94,7 +94,7 @@
         L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
         // Fit to overlay bounds (SW and NE points with (lat, lon))
-        map.fitBounds([[37.68784102518672, -122.20129863471053], [37.994985643786706, -122.7068717282611]]);
+        map.fitBounds([[37.68834966827345, -122.20119507127038], [37.9949882191689, -122.7059369007588]]);
 
         </script>
 

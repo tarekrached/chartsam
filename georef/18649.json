@@ -1,24 +1,24 @@
 {
   "chart": "18649",
   "title": "Entrance to San Francisco Bay",
-  "source_pdf": "charts/18649.pdf",
-  "pdf_dimensions": { "width": 17648, "height": 13832 },
+  "source_tif": "charts_rasterized/18649.tif",
+  "tif_dimensions": { "width": 17648, "height": 13832 },
   "gcps": [
-    { "pixel_col": 1554.0, "pixel_row":  3620, "lon": -122.6667, "lat": 37.9167 },
-    { "pixel_col": 1555.2, "pixel_row":  7262, "lon": -122.6667, "lat": 37.8333 },
-    { "pixel_col": 1532.0, "pixel_row": 10900, "lon": -122.6667, "lat": 37.7500 },
-    { "pixel_col": 4420.0, "pixel_row":  3620, "lon": -122.5833, "lat": 37.9167 },
-    { "pixel_col": 4420.5, "pixel_row":  7262, "lon": -122.5833, "lat": 37.8333 },
-    { "pixel_col": 4420.5, "pixel_row": 10900, "lon": -122.5833, "lat": 37.7500 },
-    { "pixel_col": 7307.5, "pixel_row":  3620, "lon": -122.5000, "lat": 37.9167 },
-    { "pixel_col": 7319.7, "pixel_row":  7262, "lon": -122.5000, "lat": 37.8333 },
-    { "pixel_col": 7307.5, "pixel_row": 10900, "lon": -122.5000, "lat": 37.7500 },
-    { "pixel_col": 10229.5, "pixel_row":  3620, "lon": -122.4167, "lat": 37.9167 },
-    { "pixel_col": 10195.0, "pixel_row":  7262, "lon": -122.4167, "lat": 37.8333 },
-    { "pixel_col": 10195.0, "pixel_row": 10900, "lon": -122.4167, "lat": 37.7500 },
-    { "pixel_col": 13083.0, "pixel_row":  3620, "lon": -122.3333, "lat": 37.9167 },
-    { "pixel_col": 13082.5, "pixel_row":  7262, "lon": -122.3333, "lat": 37.8333 },
-    { "pixel_col": 13082.5, "pixel_row": 10900, "lon": -122.3333, "lat": 37.7500 }
+    { "pixel_col": 1531.8, "pixel_row":  3619, "lon": -122.6667, "lat": 37.9167 },
+    { "pixel_col": 1531.9, "pixel_row":  7261, "lon": -122.6667, "lat": 37.8333 },
+    { "pixel_col": 1531.9, "pixel_row": 10899, "lon": -122.6667, "lat": 37.7500 },
+    { "pixel_col": 4419.8, "pixel_row":  3619, "lon": -122.5833, "lat": 37.9167 },
+    { "pixel_col": 4420.4, "pixel_row":  7261, "lon": -122.5833, "lat": 37.8333 },
+    { "pixel_col": 4419.8, "pixel_row": 10899, "lon": -122.5833, "lat": 37.7500 },
+    { "pixel_col": 7307.6, "pixel_row":  3619, "lon": -122.5000, "lat": 37.9167 },
+    { "pixel_col": 7307.5, "pixel_row":  7262, "lon": -122.5000, "lat": 37.8333 },
+    { "pixel_col": 7307.5, "pixel_row": 10899, "lon": -122.5000, "lat": 37.7500 },
+    { "pixel_col": 10195.9, "pixel_row":  3618, "lon": -122.4167, "lat": 37.9167 },
+    { "pixel_col": 10195.0, "pixel_row":  7261, "lon": -122.4167, "lat": 37.8333 },
+    { "pixel_col": 10195.0, "pixel_row": 10899, "lon": -122.4167, "lat": 37.7500 },
+    { "pixel_col": 13082.9, "pixel_row":  3619, "lon": -122.3333, "lat": 37.9167 },
+    { "pixel_col": 13083.9, "pixel_row":  7261, "lon": -122.3333, "lat": 37.8333 },
+    { "pixel_col": 13082.1, "pixel_row": 10900, "lon": -122.3333, "lat": 37.7500 }
   ],
   "neatline": { "col": 173, "row": 202, "width": 17455, "height": 13428 },
   "bounds": {
@@ -34,5 +34,5 @@
     "meridian_regression": "col = 375.92 + 577.68 * n, n=0 at 122°42'W",
     "rms_residual_px": 3.2
   },
-  "notes": "15 GCPs at 5 meridians × 3 parallels. Intersections measured directly (±80px centroid scan) rather than from regression estimates — regression had ~60–65px systematic bias. Warp: TPS to EPSG:3857."
+  "notes": "15 GCPs at 5 meridians × 3 parallels. Re-measured from pre-rasterized TIF (charts_rasterized/18649.tif, 400 DPI) via detect_gcps.py --validate. Corrected 4 outlier GCPs from original measurement: col errors of 12–34 px at (-122.6667,37.9167), (-122.6667,37.8333), (-122.5000,37.8333), (-122.4167,37.9167) — original measurements were biased by competing solid chart features. Per-meridian col spread now 0–2 px across all meridians (was 0–34 px). Warp: TPS to EPSG:3857."
 }

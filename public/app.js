@@ -141,7 +141,7 @@
     offlineBtn.disabled = true;
     try {
       const manifest = await fetch('tile-manifest.json').then(r => r.json());
-      const tileKey = (await caches.keys()).find(k => k.startsWith('tiles-')) || 'tiles-v6';
+      const tileKey = (await caches.keys()).find(k => k.startsWith('tiles-')) || 'tiles-v7';
       const tileCache = await caches.open(tileKey);
       const CHUNK = 20;
       let done = 0;
